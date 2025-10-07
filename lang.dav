@@ -1,0 +1,11 @@
+var x = 10;
+if (x == 10) {
+ print x;
+}
+else {
+ print "x is not 10";
+}
+
+x = y $ z;
+
+print x;
