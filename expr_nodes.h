@@ -10,16 +10,19 @@ public:
     ~PrimaryExpr() = default;
 
     Token value;
-
     void accept(AstVisitor& visitor) override { visitor.visitPrimaryExpr(this); }
 };
 
 struct PostfixTail {
+    PostfixTail(Token op) :
+        op{ op } {
+    }
+
     ~PostfixTail(); // Requires definition in .cpp
 
     Token op;
-    std::vector<Expr*> arguments;
-    Expr* indexOrCondition;
+	std::vector<Expr*> arguments; // For function calls
+    Expr* indexOrCondition = nullptr;
 };
 
 class PostfixExpr : public Expr {
@@ -92,4 +95,12 @@ public:
     Expr* right;
 
     void accept(AstVisitor& visitor) override { visitor.visitAssignmentExpr(this); }
+};
+
+class GroupingExpr : public Expr {
+public:
+    GroupingExpr(Expr* expression) : expression(expression) {}
+    ~GroupingExpr() { delete expression; }
+    void accept(AstVisitor& visitor) override { visitor.visitGroupingExpr(this); }
+    Expr* expression;
 };

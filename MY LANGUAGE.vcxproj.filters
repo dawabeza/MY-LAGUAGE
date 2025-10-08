@@ -21,6 +21,18 @@
     <ClCompile Include="scanner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ast_printer.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="expr_nodes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stmt_nodes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="token.h">
@@ -47,8 +59,14 @@
     <ClInclude Include="declaration_nodes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ast_printer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="lang.dav" />
+    <None Include="ast.dot">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -1,11 +1,15 @@
-var x = 10;
-if (x == 10) {
- print x;
-}
-else {
- print "x is not 10";
-}
-
-x = y $ z;
-
-print x;
+"if";
+"you";
+"are";
+"going";
+"to";
+"use";
+"what";
+"the";
+"fuck";
+"are";
+"you";
+"doing";
+"and";
+"all";
+"this";

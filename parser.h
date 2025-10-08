@@ -16,6 +16,7 @@ public:
 
     // The main entry point for the parser, matching the PROGRAM rule.
     std::vector<Declaration*> parse();
+	bool Error() const { return hadError; }
 
 private:
     const std::vector<Token>& tokens;

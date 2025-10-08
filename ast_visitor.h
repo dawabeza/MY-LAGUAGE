@@ -1,6 +1,7 @@
 #pragma once
 
 // Forward Declarations for Statements and Declarations
+class Declaration;
 class VarDecl;
 class FuncDecl;
 class BlockStmt;
@@ -25,7 +26,7 @@ class UnaryExpr;
 class PostfixExpr;
 class PrimaryExpr;
 struct PostfixTail;
-
+class GroupingExpr;
 class AstVisitor {
 public:
     virtual ~AstVisitor() = default;
@@ -55,4 +56,5 @@ public:
     virtual void visitUnaryExpr(UnaryExpr* expr) = 0;
     virtual void visitPostfixExpr(PostfixExpr* expr) = 0;
     virtual void visitPrimaryExpr(PrimaryExpr* expr) = 0;
+    virtual void visitGroupingExpr(GroupingExpr* expr) = 0;
 };
