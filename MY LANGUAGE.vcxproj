@@ -132,7 +132,13 @@
     <ClCompile Include="scanner.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ast_node.h" />
+    <ClInclude Include="ast_visitor.h" />
+    <ClInclude Include="declaration_nodes.h" />
+    <ClInclude Include="expr_nodes.h" />
+    <ClInclude Include="parser.h" />
     <ClInclude Include="scanner.h" />
+    <ClInclude Include="stmt_nodes.h" />
     <ClInclude Include="token.h" />
   </ItemGroup>
   <ItemGroup>
