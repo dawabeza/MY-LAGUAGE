@@ -1,6 +1,6 @@
 #include "scanner.h"       // For tokenizing the source code
 #include "parser.h"        // For building the AST
-#include "ast_printer.h"   // For generating the DOT output
+#include "ast_print.h"   // For generating the DOT output
 #include "declaration_nodes.h" // Ensures Declaration* type is known
 
 #include <iostream>
