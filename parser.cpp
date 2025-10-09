@@ -32,7 +32,7 @@ Stmt* Parser::statement() {
     // TEMPORARY: Instead of statement logic, we force it to parse 
     // the highest expression rule we want to test (unary) and treat 
     // it as an expression statement.
-    Expr* expr = postfix();
+    Expr* expr = unary();
     consume(TokenType::SEMICOLON, "Expect ';' after expression for testing.");
     return new ExprStmt(expr);
 }
@@ -78,16 +78,116 @@ Stmt* Parser::exprStatement() { throw error(peek(), "Placeholder: exprStatement 
 Expr* Parser::expression() { return assignment(); }
 Expr* Parser::assignment() { return conditional(); }
 Expr* Parser::conditional() { return logicalOr(); } // Ternary operator
-Expr* Parser::logicalOr() { return logicalAnd(); }
-Expr* Parser::logicalAnd() { return bitwiseOr(); }
-Expr* Parser::bitwiseOr() { return bitwiseXor(); }
-Expr* Parser::bitwiseXor() { return bitwiseAnd(); }
-Expr* Parser::bitwiseAnd() { return equality(); }
-Expr* Parser::equality() { return comparison(); }
-Expr* Parser::comparison() { return shift(); }
-Expr* Parser::shift() { return term(); }
-Expr* Parser::term() { return factor(); }
-Expr* Parser::factor() { return unary(); }
+Expr* Parser::logicalOr() {
+    Expr* expr = logicalAnd();
+    while (match(TokenType::PIPE_PIPE)) {
+        Token op = previous();
+        Expr* right = logicalAnd();
+        expr = new LogicalExpr(expr, op, right);
+    }
+
+    return expr;
+}
+
+Expr* Parser::logicalAnd() {
+    Expr* expr = bitwiseOr();
+    while (match(TokenType::AMP_AMP)) {
+        Token op = previous();
+        Expr* right = bitwiseOr();
+        expr = new LogicalExpr(expr, op, right);
+    }
+
+    return expr;
+}
+Expr* Parser::bitwiseOr() {
+    Expr* expr = bitwiseXor();
+    while (match(TokenType::PIPE)) {
+        Token op = previous();
+        Expr* right = bitwiseXor();
+        expr = new BinaryExpr(expr, op, right);
+    }
+    return expr;
+}
+Expr* Parser::bitwiseXor() {
+    Expr* expr = bitwiseAnd();
+    while (match(TokenType::CARET)) {
+        Token op = previous();
+        Expr* right = bitwiseAnd();
+        expr = new BinaryExpr(expr, op, right);
+    }
+
+    return expr;
+}
+Expr* Parser::bitwiseAnd() {
+    Expr* expr = equality();
+
+    while (match(TokenType::AMP)) {
+
+        Token op = previous();
+
+        Expr* right = equality();
+
+        expr = new BinaryExpr(expr, op, right);
+    }
+    return expr;
+}
+
+Expr* Parser::equality() {
+    Expr* expr = comparison();
+
+    while (match(TokenType::EQUAL_EQUAL, TokenType::BANG_EQUAL)) {
+        Token op = previous();
+        Expr* right = comparison();
+        expr = new BinaryExpr(expr, op, right);
+    }
+
+    return expr;
+}
+Expr* Parser::comparison() {
+    Expr* expr = shift();
+    while (match(TokenType::LESS, TokenType::LESS_EQUAL,
+        TokenType::GREATER, TokenType::GREATER_EQUAL)) {
+        Token op = previous();
+        Expr* right = shift();
+        expr = new BinaryExpr(expr, op, right);
+    }
+    return expr;
+}
+
+Expr* Parser::shift() {
+    Expr* expr = term();
+
+    while (match(TokenType::SHIFT_LEFT, TokenType::SHIFT_RIGHT)) {
+        Token op = previous();
+        Expr* right = term();
+        expr = new BinaryExpr(expr, op, right);
+    }
+    return expr;
+}
+
+
+Expr* Parser::term() {
+    // TERM -> FACTOR ( ("+" | "-") FACTOR )* ;
+    Expr* expr = factor();
+    while (match(TokenType::PLUS, TokenType::MINUS)) {
+        Token op = previous();
+        Expr* right = factor();
+        expr = new BinaryExpr(expr, op, right);
+    }
+    return expr;
+}
+Expr* Parser::factor() {
+    // FACTOR -> UNARY ( ("*" | "/" | "%") UNARY )* ;
+    Expr* expr = unary();
+    // Loop to handle left-associative operators: *, /, %
+    while (match(TokenType::STAR, TokenType::SLASH, TokenType::PERCENT)) {
+        Token op = previous();
+        Expr* right = unary();
+		//this enforced left associativity
+        expr = new BinaryExpr(expr, op, right);
+    }
+    return expr;
+}
 
 Expr* Parser::unary() { // <<< Definition for unresolved external symbol 2
     // UNARY -> ( "!" | "~" | "++" | "--" | "+" | "-" ) UNARY | POSTFIX ;
