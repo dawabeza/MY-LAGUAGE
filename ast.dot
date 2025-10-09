@@ -3,8 +3,24 @@ digraph AST {
     N0 [label="PROGRAM ROOT"];
     N1 [label="Expr Stmt"];
     N0 -> N1 [label=""];
-    N2 [label="Unary: -"];
+    N2 [label="Binary: +"];
     N1 -> N2 [label=""];
-    N3 [label="LIT: 1"];
-    N2 -> N3 [label=""];
+    N2 -> N3 [label="Left"];
+    N4 [label="Binary: -"];
+    N2 -> N4 [label=""];
+    N4 -> N5 [label="Left"];
+    N6 [label="Binary: +"];
+    N4 -> N6 [label=""];
+    N6 -> N7 [label="Left"];
+    N8 [label="LIT: 4"];
+    N6 -> N8 [label=""];
+    N6 -> N9 [label="Right"];
+    N10 [label="LIT: 4"];
+    N6 -> N10 [label=""];
+    N4 -> N11 [label="Right"];
+    N12 [label="LIT: 4"];
+    N4 -> N12 [label=""];
+    N2 -> N13 [label="Right"];
+    N14 [label="LIT: 2"];
+    N2 -> N14 [label=""];
 }

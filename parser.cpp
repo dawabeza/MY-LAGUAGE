@@ -32,7 +32,7 @@ Stmt* Parser::statement() {
     // TEMPORARY: Instead of statement logic, we force it to parse 
     // the highest expression rule we want to test (unary) and treat 
     // it as an expression statement.
-    Expr* expr = unary();
+    Expr* expr = logicalOr();
     consume(TokenType::SEMICOLON, "Expect ';' after expression for testing.");
     return new ExprStmt(expr);
 }
