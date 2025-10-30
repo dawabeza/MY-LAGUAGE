@@ -34,6 +34,7 @@ Declaration* Parser::varDeclaration() {
 	consume(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
 	return new VarDecl(name, initializer);
 }
+
 Declaration* Parser::funDeclaration() { 
 	Token name = consume(TokenType::IDENTIFIER, "Expect function name.");
 	consume(TokenType::LEFT_PAREN, "Expect '(' after function name.");
@@ -53,9 +54,34 @@ Declaration* Parser::funDeclaration() {
 }
 
 Stmt* Parser::statement() {
-    Expr* expr = expression();
-    consume(TokenType::SEMICOLON, "Expect ';' after expression for testing.");
-    return new ExprStmt(expr);
+    switch (peek().type) {
+	case TokenType::LEFT_BRACE:
+		advance(); // Consume '{'
+		return blockStatement();
+	case TokenType::IF:
+		return ifStatement();
+    case TokenType::FOR:
+		return forStatement();
+	case TokenType::WHILE:
+		return whileStatement();
+	case TokenType::DO:
+		return doWhileStatement();
+	case TokenType::SWITCH:
+		return switchStatement();
+	case TokenType::BREAK:
+		return breakStatement();
+	case TokenType::CONTINUE:
+		return continueStatement();
+	case TokenType::RETURN:
+		return returnStatement();
+	case TokenType::PRINT:
+		return printStatement();
+	case TokenType::SEMICOLON:
+		advance(); // Consume the semicolon
+		return new ExprStmt(nullptr); // Empty statement
+    default:
+		return exprStatement();
+    }
 }
 
 
@@ -67,9 +93,9 @@ Declaration* Parser::declaration() {
         if (match(TokenType::VAR)) {
             return varDeclaration();
         }
-	    if (match(TokenType::FUN)) {
-		    return funDeclaration();
-	    }
+        if (match(TokenType::FUN)) {
+            return funDeclaration();
+        }
         // If it's not a declaration, assume it's a statement.
         return statement();
     }
@@ -81,12 +107,26 @@ Declaration* Parser::declaration() {
 }
 
 Stmt* Parser::blockStatement() {
-    // Minimal definition
+	// BLOCK_STATEMENT -> "{" DECLARATION* "}" ;
+	std::vector<Declaration*> statements;
+	while (!isAtEnd() && !check(TokenType::RIGHT_BRACE)) {
+		statements.push_back(declaration());
+	}
     consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
-    return new BlockStmt({});
+	return new BlockStmt(statements);
 }
 
-Stmt* Parser::ifStatement() { throw error(peek(), "Placeholder: ifStatement not implemented."); }
+Stmt* Parser::ifStatement() {
+	consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
+	Expr* condition = expression();
+	consume(TokenType::RIGHT_PAREN, "Expect ')' after if condition.");
+	Stmt* thenBranch = statement();
+	Stmt* elseBranch = nullptr;
+	if (match(TokenType::ELSE)) {
+		elseBranch = statement();
+	}
+	return new IfStmt(condition, thenBranch, elseBranch);
+}
 Stmt* Parser::forStatement() { throw error(peek(), "Placeholder: forStatement not implemented."); }
 Stmt* Parser::whileStatement() { throw error(peek(), "Placeholder: whileStatement not implemented."); }
 Stmt* Parser::doWhileStatement() { throw error(peek(), "Placeholder: doWhileStatement not implemented."); }
@@ -109,6 +149,7 @@ Expr* Parser::expression() {
 }
 
 Expr* Parser::assignment() {
+	// ASSIGNMENT -> CONDITIONAL ( ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "<<=" | ">>=" | "&=" | "^=" | "|=") ASSIGNMENT )? ;
     Expr* expr = conditional();
 
     if (match(TokenType::EQUAL, TokenType::PLUS_EQUAL, TokenType::MINUS_EQUAL,
@@ -132,6 +173,7 @@ Expr* Parser::assignment() {
     return expr;
 }
 Expr* Parser::conditional() {
+	// CONDITIONAL -> LOGICAL_OR ( "?" EXPR ":" CONDITIONAL )? ;
     // Start with the expression of higher precedence (the condition)
     Expr* expr = logicalOr();
 
@@ -150,6 +192,7 @@ Expr* Parser::conditional() {
     return expr;
 }
 Expr* Parser::logicalOr() {
+	// LOGICAL_OR -> LOGICAL_AND ( "||" LOGICAL_AND )* ;
     Expr* expr = logicalAnd();
     while (match(TokenType::PIPE_PIPE)) {
         Token op = previous();
@@ -161,6 +204,7 @@ Expr* Parser::logicalOr() {
 }
 
 Expr* Parser::logicalAnd() {
+	// LOGICAL_AND -> BITWISE_OR ( "&&" BITWISE_OR )* ;
     Expr* expr = bitwiseOr();
     while (match(TokenType::AMP_AMP)) {
         Token op = previous();
@@ -171,6 +215,7 @@ Expr* Parser::logicalAnd() {
     return expr;
 }
 Expr* Parser::bitwiseOr() {
+	// BITWISE_OR -> BITWISE_XOR ( "|" BITWISE_XOR )* ;
     Expr* expr = bitwiseXor();
     while (match(TokenType::PIPE)) {
         Token op = previous();
@@ -180,6 +225,7 @@ Expr* Parser::bitwiseOr() {
     return expr;
 }
 Expr* Parser::bitwiseXor() {
+	// BITWISE_XOR -> BITWISE_AND ( "^" BITWISE_AND )* ;
     Expr* expr = bitwiseAnd();
     while (match(TokenType::CARET)) {
         Token op = previous();
@@ -190,6 +236,7 @@ Expr* Parser::bitwiseXor() {
     return expr;
 }
 Expr* Parser::bitwiseAnd() {
+	// BITWISE_AND -> EQUALITY ( "&" EQUALITY )* ;
     Expr* expr = equality();
 
     while (match(TokenType::AMP)) {
@@ -204,6 +251,7 @@ Expr* Parser::bitwiseAnd() {
 }
 
 Expr* Parser::equality() {
+	// EQUALITY -> COMPARISON ( ("==" | "!=") COMPARISON )* ;
     Expr* expr = comparison();
 
     while (match(TokenType::EQUAL_EQUAL, TokenType::BANG_EQUAL)) {
@@ -215,6 +263,7 @@ Expr* Parser::equality() {
     return expr;
 }
 Expr* Parser::comparison() {
+	// COMPARISON -> SHIFT ( ("<" | "<=" | ">" | ">=") SHIFT )* ;
     Expr* expr = shift();
     while (match(TokenType::LESS, TokenType::LESS_EQUAL,
         TokenType::GREATER, TokenType::GREATER_EQUAL)) {
@@ -226,6 +275,7 @@ Expr* Parser::comparison() {
 }
 
 Expr* Parser::shift() {
+	// SHIFT -> TERM ( ("<<" | ">>") TERM )* ;
     Expr* expr = term();
 
     while (match(TokenType::SHIFT_LEFT, TokenType::SHIFT_RIGHT)) {

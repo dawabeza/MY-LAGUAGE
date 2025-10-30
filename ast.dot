@@ -1,16 +1,24 @@
 digraph AST {
     rankdir=TB;
     N0 [label="PROGRAM ROOT"];
-    N1 [label="Expr Stmt"];
+    N1 [label="VAR: x"];
     N0 -> N1;
-    N2 [label="Binary: +"];
+    N2 [label="LIT: 10"];
     N1 -> N2;
-    N3 [label="Binary: +"];
-    N2 -> N3;
-    N4 [label="LIT: x"];
+    N3 [label="VAR: y"];
+    N0 -> N3;
+    N4 [label="LIT: 11"];
     N3 -> N4;
-    N5 [label="LIT: 1"];
-    N3 -> N5;
-    N6 [label="LIT: 3"];
-    N2 -> N6;
+    N5 [label="VAR: x"];
+    N0 -> N5;
+    N6 [label="LIT: 10"];
+    N5 -> N6;
+    N7 [label="VAR: abc"];
+    N0 -> N7;
+    N8 [label="Binary: +"];
+    N7 -> N8;
+    N9 [label="LIT: 10"];
+    N8 -> N9;
+    N10 [label="LIT: 11"];
+    N8 -> N10;
 }
