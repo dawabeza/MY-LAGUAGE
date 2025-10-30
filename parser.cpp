@@ -128,9 +128,52 @@ Stmt* Parser::ifStatement() {
 	}
 	return new IfStmt(condition, thenBranch, elseBranch);
 }
-Stmt* Parser::forStatement() { throw error(peek(), "Placeholder: forStatement not implemented."); }
-Stmt* Parser::whileStatement() { throw error(peek(), "Placeholder: whileStatement not implemented."); }
-Stmt* Parser::doWhileStatement() { throw error(peek(), "Placeholder: doWhileStatement not implemented."); }
+Stmt* Parser::forStatement() { 
+	// Consume 'for'
+	advance();
+	consume(TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
+	Declaration* initializer = nullptr;
+	if (match(TokenType::SEMICOLON)) {
+		initializer = nullptr;
+	}
+	else if (match(TokenType::VAR)) {
+		initializer = varDeclaration();
+	}
+	else {
+		initializer = exprStatement();
+	}
+	Expr* condition = nullptr;
+	if (!check(TokenType::SEMICOLON)) {
+		condition = expression();
+	}
+	consume(TokenType::SEMICOLON, "Expect ';' after loop condition.");
+	Expr* increment = nullptr;
+	if (!check(TokenType::RIGHT_PAREN)) {
+		increment = expression();
+	}
+	consume(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
+	Stmt* body = statement();
+	return new ForStmt(initializer, condition, increment, body);
+}
+Stmt* Parser::whileStatement() {
+	// Consume 'while'
+	advance();
+	consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
+	Expr* condition = expression();
+	consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
+	Stmt* body = statement();
+	return new WhileStmt(condition, body);
+}
+Stmt* Parser::doWhileStatement() {
+	// Consume 'do'
+	advance();
+	Stmt* body = statement();
+	consume(TokenType::WHILE, "Expect 'while' after 'do' body.");
+	consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
+	Expr* condition = expression();
+	consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
+	return new DoWhileStmt(body, condition);
+}
 
 Stmt* Parser::switchStatement() { 
 	//consume 'switch'
