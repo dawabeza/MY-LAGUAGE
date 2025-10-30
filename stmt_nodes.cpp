@@ -13,7 +13,7 @@ BlockStmt::~BlockStmt() {
 CaseStmt::~CaseStmt() {
     delete value; // The expression for the case value
     // Must delete all statements contained within the case body.
-    for (Stmt* stmt : body) {
+    for (Declaration* stmt : body) {
         delete stmt;
     }
 }
