@@ -55,8 +55,7 @@ Declaration* Parser::funDeclaration() {
 
 Stmt* Parser::statement() {
     switch (peek().type) {
-	case TokenType::LEFT_BRACE:
-		advance(); // Consume '{'
+    case TokenType::LEFT_BRACE:
 		return blockStatement();
 	case TokenType::IF:
 		return ifStatement();
@@ -108,6 +107,7 @@ Declaration* Parser::declaration() {
 
 Stmt* Parser::blockStatement() {
 	// BLOCK_STATEMENT -> "{" DECLARATION* "}" ;
+	advance(); // Consume the '{'
 	std::vector<Declaration*> statements;
 	while (!isAtEnd() && !check(TokenType::RIGHT_BRACE)) {
 		statements.push_back(declaration());
@@ -117,6 +117,7 @@ Stmt* Parser::blockStatement() {
 }
 
 Stmt* Parser::ifStatement() {
+	advance(); // Consume 'if'
 	consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
 	Expr* condition = expression();
 	consume(TokenType::RIGHT_PAREN, "Expect ')' after if condition.");
@@ -130,12 +131,41 @@ Stmt* Parser::ifStatement() {
 Stmt* Parser::forStatement() { throw error(peek(), "Placeholder: forStatement not implemented."); }
 Stmt* Parser::whileStatement() { throw error(peek(), "Placeholder: whileStatement not implemented."); }
 Stmt* Parser::doWhileStatement() { throw error(peek(), "Placeholder: doWhileStatement not implemented."); }
-Stmt* Parser::switchStatement() { throw error(peek(), "Placeholder: switchStatement not implemented."); }
-Stmt* Parser::breakStatement() { throw error(peek(), "Placeholder: breakStatement not implemented."); }
-Stmt* Parser::continueStatement() { throw error(peek(), "Placeholder: continueStatement not implemented."); }
-Stmt* Parser::returnStatement() { throw error(peek(), "Placeholder: returnStatement not implemented."); }
-Stmt* Parser::printStatement() { throw error(peek(), "Placeholder: printStatement not implemented."); }
-Stmt* Parser::exprStatement() {  throw error(peek(), "Placeholder: Expr stmt not implemented.");
+Stmt* Parser::switchStatement() { 
+}
+Stmt* Parser::breakStatement() {
+	// Consume 'break'
+	advance();
+	consume(TokenType::SEMICOLON, "Expect ';' after 'break'.");
+	return new BreakStmt();
+}
+Stmt* Parser::continueStatement() {
+	// Consume 'continue'
+	advance();
+	consume(TokenType::SEMICOLON, "Expect ';' after 'continue'.");
+	return new ContinueStmt();
+}
+
+Stmt* Parser::returnStatement() { 
+	advance(); // Consume 'return'
+	Expr* value = nullptr;
+	if (!check(TokenType::SEMICOLON)) {
+		value = expression();
+	}
+	consume(TokenType::SEMICOLON, "Expect ';' after return value.");
+	return new ReturnStmt(value);
+}
+Stmt* Parser::printStatement() { 
+	advance(); // Consume 'print'
+	Expr* value = expression();
+	consume(TokenType::SEMICOLON, "Expect ';' after value.");
+	return new PrintStmt(value);
+}
+
+Stmt* Parser::exprStatement() {
+	Expr* expr = expression();
+	consume(TokenType::SEMICOLON, "Expect ';' after expression.");
+	return new ExprStmt(expr);
 }
 
 

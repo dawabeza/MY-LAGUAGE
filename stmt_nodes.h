@@ -114,7 +114,6 @@ public:
 
 struct CaseStmt {
     ~CaseStmt(); // Requires definition in .cpp
-
     Expr* value;
     std::vector<Stmt*> body;
 };
