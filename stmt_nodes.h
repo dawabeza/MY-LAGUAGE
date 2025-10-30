@@ -115,7 +115,7 @@ public:
 struct CaseStmt {
     ~CaseStmt(); // Requires definition in .cpp
     Expr* value;
-    std::vector<Stmt*> body;
+    std::vector<Declaration*> body;
 };
 
 class SwitchStmt : public Stmt {

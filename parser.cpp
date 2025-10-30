@@ -131,7 +131,37 @@ Stmt* Parser::ifStatement() {
 Stmt* Parser::forStatement() { throw error(peek(), "Placeholder: forStatement not implemented."); }
 Stmt* Parser::whileStatement() { throw error(peek(), "Placeholder: whileStatement not implemented."); }
 Stmt* Parser::doWhileStatement() { throw error(peek(), "Placeholder: doWhileStatement not implemented."); }
+
 Stmt* Parser::switchStatement() { 
+	//consume 'switch'
+	advance();
+	consume(TokenType::LEFT_PAREN, "Expect '(' after 'switch'.");
+	Expr* condition = expression();
+	consume(TokenType::RIGHT_PAREN, "Expect ')' after switch condition.");
+	consume(TokenType::LEFT_BRACE, "Expect '{' before switch cases.");
+	std::vector<CaseStmt*> cases;
+	while (!isAtEnd() && !check(TokenType::RIGHT_BRACE)) {
+		if (match(TokenType::CASE)) {
+			Expr* caseValue = expression();
+			consume(TokenType::COLON, "Expect ':' after case value.");
+			std::vector<Declaration*> statements;
+			while (!isAtEnd() && !check(TokenType::CASE) && !check(TokenType::DEFAULT) && !check(TokenType::RIGHT_BRACE)) {
+				statements.push_back(declaration());
+			}
+			cases.push_back(new CaseStmt{ caseValue,  });
+		}
+		else if (match(TokenType::DEFAULT)) {
+			consume(TokenType::COLON, "Expect ':' after 'default'.");
+			std::vector<Declaration*> statements;
+			while (!isAtEnd() && !check(TokenType::RIGHT_BRACE)) {
+				statements.push_back(declaration());
+			}
+			cases.push_back(new CaseStmt{ nullptr, statements });
+		}
+		else {
+			throw error(peek(), "Expect 'case' or 'default' in switch statement.");
+		}
+	}
 }
 Stmt* Parser::breakStatement() {
 	// Consume 'break'
