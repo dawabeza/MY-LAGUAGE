@@ -30,7 +30,7 @@ private:
     // Top-level rules
     Declaration* declaration();
     Declaration* varDeclaration();
-    Declaration* funDeclaration(const std::string& kind);
+    Declaration* funDeclaration();
 
     // Statements
     Stmt* statement();

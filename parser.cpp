@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "expr_nodes.h"
 #include "stmt_nodes.h"
+#include "declaration_nodes.h"
 #include <iostream>
 
 Parser::Parser(const std::vector<Token>& tokens)
@@ -11,9 +12,8 @@ Parser::Parser(const std::vector<Token>& tokens)
     // 'hadError' is automatically false.
 }
 
-std::vector<Declaration*> Parser::parse() { // <<< Definition for unresolved external symbol 1
+std::vector<Declaration*> Parser::parse() { 
     std::vector<Declaration*> declarations;
-
     // The program is a list of declarations until the EOF is hit.
     while (!isAtEnd()) {
         Declaration* decl = declaration();
@@ -25,28 +25,56 @@ std::vector<Declaration*> Parser::parse() { // <<< Definition for unresolved ext
     return declarations;
 }
 
-Declaration* Parser::varDeclaration() { /* ... implementation ... */ return nullptr; }
-Declaration* Parser::funDeclaration(const std::string& kind) { /* ... implementation ... */ return nullptr; }
+Declaration* Parser::varDeclaration() { 
+	Token name = consume(TokenType::IDENTIFIER, "Expect variable name.");
+	Expr* initializer = nullptr;
+	if (match(TokenType::EQUAL)) {
+		initializer = expression();
+	}
+	consume(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
+	return new VarDecl(name, initializer);
+}
+Declaration* Parser::funDeclaration() { 
+	Token name = consume(TokenType::IDENTIFIER, "Expect function name.");
+	consume(TokenType::LEFT_PAREN, "Expect '(' after function name.");
+	std::vector<Token> parameters;
+	if (!check(TokenType::RIGHT_PAREN)) {
+		do {
+			if (parameters.size() >= 255) {
+				throw error(peek(), "Cannot have more than 255 parameters.");
+			}
+			parameters.push_back(consume(TokenType::IDENTIFIER, "Expect parameter name."));
+		} while (match(TokenType::COMMA));
+	}
+	consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
+	consume(TokenType::LEFT_BRACE, "Expect '{' before function body.");
+	BlockStmt* body = dynamic_cast<BlockStmt*>(blockStatement());
+	return new FuncDecl(name, parameters, body);
+}
 
 Stmt* Parser::statement() {
-    // TEMPORARY: Instead of statement logic, we force it to parse 
-    // the highest expression rule we want to test (unary) and treat 
-    // it as an expression statement.
-    Expr* expr = logicalOr();
+    Expr* expr = expression();
     consume(TokenType::SEMICOLON, "Expect ';' after expression for testing.");
     return new ExprStmt(expr);
 }
 
+
 // --- 2. Revised declaration() (Bypassing VAR/FUN for testing) ---
 
 Declaration* Parser::declaration() {
+
     try {
-        if (check(TokenType::VAR) || check(TokenType::FUN)) {
-            throw error(peek(), "Declaration keywords ('var', 'fun') temporarily disabled for expression testing.");
+        if (match(TokenType::VAR)) {
+            return varDeclaration();
         }
+	    if (match(TokenType::FUN)) {
+		    return funDeclaration();
+	    }
+        // If it's not a declaration, assume it's a statement.
         return statement();
     }
     catch (ParseError& error) {
+        // If an error occurs, enter panic mode to discard tokens until the next safe point.
         synchronize();
         return nullptr;
     }
@@ -67,7 +95,8 @@ Stmt* Parser::breakStatement() { throw error(peek(), "Placeholder: breakStatemen
 Stmt* Parser::continueStatement() { throw error(peek(), "Placeholder: continueStatement not implemented."); }
 Stmt* Parser::returnStatement() { throw error(peek(), "Placeholder: returnStatement not implemented."); }
 Stmt* Parser::printStatement() { throw error(peek(), "Placeholder: printStatement not implemented."); }
-Stmt* Parser::exprStatement() { throw error(peek(), "Placeholder: exprStatement not implemented."); }
+Stmt* Parser::exprStatement() {  throw error(peek(), "Placeholder: Expr stmt not implemented.");
+}
 
 
 // --- Expression Rules (The Complete Chain - all must be defined) ---
@@ -75,9 +104,51 @@ Stmt* Parser::exprStatement() { throw error(peek(), "Placeholder: exprStatement 
 // Note: parse, expression, assignment, conditional, logicalOr, etc. 
 // must be fully defined, even as simple placeholders that call the next rule.
 
-Expr* Parser::expression() { return assignment(); }
-Expr* Parser::assignment() { return conditional(); }
-Expr* Parser::conditional() { return logicalOr(); } // Ternary operator
+Expr* Parser::expression() { 
+    return assignment(); 
+}
+
+Expr* Parser::assignment() {
+    Expr* expr = conditional();
+
+    if (match(TokenType::EQUAL, TokenType::PLUS_EQUAL, TokenType::MINUS_EQUAL,
+        TokenType::STAR_EQUAL, TokenType::SLASH_EQUAL, TokenType::PERCENT_EQUAL,
+        TokenType::SHIFT_LEFT_EQUAL, TokenType::SHIFT_RIGHT_EQUAL,
+        TokenType::AMP_EQUAL, TokenType::CARET_EQUAL, TokenType::PIPE_EQUAL)) {
+
+        Token op = previous();
+        Expr* value = assignment();
+        if (dynamic_cast<PrimaryExpr*>(expr) && dynamic_cast<PrimaryExpr*>(expr)->value.type == TokenType::IDENTIFIER) {
+            return new AssignmentExpr(expr, op, value);
+        }
+
+        if (dynamic_cast<PostfixExpr*>(expr)) {
+            return new AssignmentExpr(expr, op, value);
+        }
+        error(op, "Invalid assignment target.");
+        return new AssignmentExpr(expr, op, value);
+    }
+
+    return expr;
+}
+Expr* Parser::conditional() {
+    // Start with the expression of higher precedence (the condition)
+    Expr* expr = logicalOr();
+
+    // Check for the ternary operator start '?'
+    if (match(TokenType::QUESTION)) {
+        Expr* thenExpr = expression();
+        consume(TokenType::COLON, "Expect ':' after true expression in conditional operator.");
+        //this is the secret to enforce right_associativity here
+        Expr* elseExpr = conditional();
+
+        // Return the ConditionalExpr node
+        return new ConditionalExpr(expr, thenExpr, elseExpr);
+    }
+
+    // If no '?', return the logicalOr expression as is
+    return expr;
+}
 Expr* Parser::logicalOr() {
     Expr* expr = logicalAnd();
     while (match(TokenType::PIPE_PIPE)) {

@@ -5,16 +5,12 @@ digraph AST {
     N0 -> N1;
     N2 [label="Binary: +"];
     N1 -> N2;
-    N3 [label="Binary: -"];
+    N3 [label="Binary: +"];
     N2 -> N3;
-    N4 [label="Binary: +"];
+    N4 [label="LIT: x"];
     N3 -> N4;
-    N5 [label="LIT: 4"];
-    N4 -> N5;
-    N6 [label="LIT: 4"];
-    N4 -> N6;
-    N7 [label="LIT: 4"];
-    N3 -> N7;
-    N8 [label="LIT: 2"];
-    N2 -> N8;
+    N5 [label="LIT: 1"];
+    N3 -> N5;
+    N6 [label="LIT: 3"];
+    N2 -> N6;
 }
